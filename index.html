@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLE Project Challenge Directory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f5f2; --surface: #ffffff; --text: #1a1a1a; --text-2: #555; --text-3: #888;
+      --accent: #1a6bc4; --accent-light: #eaf1fb; --accent-hover: #1558a0;
+      --border: #e0dcd6; --border-light: #eae6e0; --row-hover: #fdfcfa; --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Source Sans 3', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 32px 24px 24px; }
+    .header-inner { max-width: 1200px; margin: 0 auto; }
+    .header-top { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; margin-bottom: 8px; }
+    .header h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 800; font-size: 26px; letter-spacing: -0.3px; }
+    .header-meta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .people-count { font-size: 14px; color: var(--text-3); font-weight: 500; }
+    .people-count strong { color: var(--accent); font-weight: 700; }
+    .add-btn { display: inline-flex; align-items: center; gap: 5px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
+    .add-btn:hover { background: var(--accent-hover); }
+    .add-btn svg { width: 14px; height: 14px; }
+    .header-desc { font-size: 15px; color: var(--text-2); max-width: 700px; line-height: 1.55; }
+    .filters { max-width: 1200px; margin: 0 auto; padding: 20px 24px 16px; }
+    .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+    .search-box { flex: 1; min-width: 200px; max-width: 320px; position: relative; }
+    .search-box svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #aaa; pointer-events: none; }
+    .search-box input { width: 100%; padding: 9px 12px 9px 36px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); }
+    .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,107,196,0.08); }
+    .multi-select { position: relative; min-width: 200px; }
+    .multi-select-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); cursor: pointer; min-width: 200px; user-select: none; }
+    .multi-select-btn:hover { border-color: #ccc; }
+    .multi-select-btn.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,107,196,0.08); }
+    .multi-select-btn .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .multi-select-btn .count-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px; flex-shrink: 0; }
+    .multi-select-btn svg { width: 14px; height: 14px; color: #999; flex-shrink: 0; transition: transform 0.2s; }
+    .multi-select-btn.active svg { transform: rotate(180deg); }
+    .multi-select-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.08); z-index: 100; max-height: 280px; overflow-y: auto; padding: 4px 0; }
+    .multi-select-dropdown.open { display: block; }
+    .ms-option { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; font-size: 13px; user-select: none; }
+    .ms-option:hover { background: var(--accent-light); }
+    .ms-option input { accent-color: var(--accent); cursor: pointer; width: 15px; height: 15px; flex-shrink: 0; }
+    .ms-option span { flex: 1; }
+    .ms-option .opt-count { font-size: 12px; color: var(--text-3); }
+    .ms-clear { display: block; padding: 7px 12px; font-size: 12px; color: var(--accent); font-weight: 600; cursor: pointer; border-top: 1px solid var(--border-light); text-align: center; }
+    .ms-clear:hover { background: var(--accent-light); }
+    .results-count { font-size: 13px; color: var(--text-3); padding: 9px 4px; white-space: nowrap; align-self: center; }
+    .table-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; font-size: 14px; }
+    thead { background: #f5f3ef; position: sticky; top: 0; z-index: 10; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-2); border-bottom: 2px solid var(--border); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border-light); transition: background 0.1s; }
+    tbody tr:hover { background: var(--row-hover); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 11px 14px; vertical-align: top; color: var(--text); line-height: 1.45; }
+    .col-name { font-weight: 600; white-space: nowrap; min-width: 120px; }
+    .col-linkedin a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .col-linkedin a:hover { color: var(--accent-hover); text-decoration: underline; }
+    .col-email { color: var(--text-2); font-size: 13px; }
+    .col-email a { color: var(--text-2); text-decoration: none; }
+    .col-email a:hover { color: var(--accent); text-decoration: underline; }
+    .col-functions { max-width: 260px; }
+    .col-location { max-width: 220px; }
+    .col-notes { max-width: 300px; color: var(--text-2); font-size: 13px; }
+    .notes-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+    .notes-text.expanded { -webkit-line-clamp: unset; display: block; }
+    .func-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #f0ece6; color: #5a5044; font-size: 12px; font-weight: 500; margin: 1px 3px 1px 0; white-space: nowrap; }
+    .loc-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #e8f0f8; color: #3a5a7a; font-size: 12px; font-weight: 500; margin: 1px 3px 1px 0; white-space: nowrap; }
+    .state-msg { text-align: center; padding: 60px 24px; color: var(--text-3); font-size: 15px; }
+    .state-msg h3 { font-family: 'Fraunces', serif; font-size: 20px; color: var(--text); margin-bottom: 6px; }
+    .footer { max-width: 1200px; margin: 0 auto; padding: 20px 24px; text-align: center; font-size: 12px; color: #bbb; }
+    @media (max-width: 768px) {
+      .header h1 { font-size: 22px; }
+      .filters-row { flex-direction: column; }
+      .search-box { max-width: 100%; }
+      .multi-select { width: 100%; }
+      .multi-select-btn { width: 100%; }
+      table { font-size: 13px; }
+      thead th, tbody td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <h1>MLE Project Challenge Directory</h1>
+        <div class="header-meta">
+          <span class="people-count"><strong id="totalCount">20</strong> participants listed</span>
+          <a class="add-btn" href="#" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add Your Info
+          </a>
+        </div>
+      </div>
+      <p class="header-desc">A directory of Machine Learning Engineers participating in the MLE Project Challenge. Browse participants or add yourself so collaborators and recruiters can find you.</p>
+    </div>
+  </div>
+  <div class="filters">
+    <div class="filters-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by keyword..." />
+      </div>
+      <div class="multi-select" id="fnMultiSelect">
+        <div class="multi-select-btn" id="fnBtn">
+          <span class="label">All Specializations</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="multi-select-dropdown" id="fnDropdown"></div>
+      </div>
+      <div class="multi-select" id="locMultiSelect">
+        <div class="multi-select-btn" id="locBtn">
+          <span class="label">All Locations</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="multi-select-dropdown" id="locDropdown"></div>
+      </div>
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div id="tableContainer"></div>
+  </div>
+  <div class="footer">MLE Project Challenge Directory &middot; Updated: <span id="refreshTime"></span></div>
+  <script>
+    const FAKE_DATA = [
+      { name: "Alex Rivera", linkedin: "linkedin.com/in/alexrivera", email: "alex.rivera@email.com", functions: "Deep Learning, Computer Vision", location: "San Francisco, CA", notes: "Focused on real-time object detection pipelines. 5 years at a self-driving startup." },
+      { name: "Priya Nair", linkedin: "linkedin.com/in/priyanair", email: "priya.nair@email.com", functions: "NLP, Large Language Models", location: "Remote — US", notes: "Building fine-tuning workflows for domain-specific LLMs. Open to collaboration on RLHF projects." },
+      { name: "Jordan Lee", linkedin: "linkedin.com/in/jordanlee-ml", email: "jordan.lee@email.com", functions: "MLOps, Platform Infrastructure", location: "Seattle, WA", notes: "Specializes in ML platform tooling, feature stores, and model serving at scale." },
+      { name: "Sofia Muller", linkedin: "linkedin.com/in/sofiamuller", email: "sofia.muller@email.com", functions: "Deep Learning, Generative AI", location: "Berlin, Germany", notes: "Researching diffusion models and multimodal generation. PhD from TU Berlin." },
+      { name: "Marcus Thompson", linkedin: "linkedin.com/in/marcusthompson", email: "marcus.t@email.com", functions: "Reinforcement Learning, Robotics", location: "Boston, MA", notes: "Working on sim-to-real transfer for robotic manipulation tasks." },
+      { name: "Yuki Tanaka", linkedin: "linkedin.com/in/yukitanaka", email: "yuki.tanaka@email.com", functions: "Data Science, Machine Learning", location: "Tokyo, Japan", notes: "Strong background in time-series forecasting for financial applications." },
+      { name: "Fatima Al-Hassan", linkedin: "linkedin.com/in/fatimaalhassan", email: "fatima.ah@email.com", functions: "NLP, Applied Scientist", location: "Remote — International", notes: "Multilingual NLP specialist. Interested in low-resource language modeling." },
+      { name: "Carlos Mendez", linkedin: "linkedin.com/in/carlosmendez-ml", email: "carlos.mendez@email.com", functions: "Computer Vision, Deep Learning", location: "Austin, TX", notes: "Medical imaging AI, segmentation and anomaly detection." },
+      { name: "Hannah Park", linkedin: "linkedin.com/in/hannahpark", email: "hannah.park@email.com", functions: "MLOps, Data Engineering", location: "New York, NY", notes: "Designed end-to-end ML pipelines handling 100B+ daily events at a major tech company." },
+      { name: "Liam O Brien", linkedin: "linkedin.com/in/liamobrienml", email: "liam.obrien@email.com", functions: "Machine Learning, Recommendation Systems", location: "Dublin, Ireland", notes: "Specialized in real-time personalization engines and A/B testing frameworks." },
+      { name: "Anastasia Volkov", linkedin: "linkedin.com/in/anastasiavolkov", email: "a.volkov@email.com", functions: "Generative AI, Large Language Models", location: "Remote — International", notes: "Prompt engineering and RAG system design. Previously at a leading AI research lab." },
+      { name: "Kwame Asante", linkedin: "linkedin.com/in/kwameasante", email: "kwame.asante@email.com", functions: "Data Science, NLP", location: "Toronto, Canada", notes: "Building NLP tools for African languages. Passionate about AI equity and accessibility." },
+      { name: "Emma Johansson", linkedin: "linkedin.com/in/emmajohansson", email: "emma.j@email.com", functions: "Deep Learning, MLOps", location: "Stockholm, Sweden", notes: "Deploying transformer models at the edge. Interested in model compression and quantization." },
+      { name: "Raj Patel", linkedin: "linkedin.com/in/rajpatel-ml", email: "raj.patel@email.com", functions: "Machine Learning, Platform Infrastructure", location: "San Francisco, CA", notes: "Built internal ML training infrastructure for a 500-person ML org. Loves Kubernetes and Ray." },
+      { name: "Mei Lin", linkedin: "linkedin.com/in/meilin-ai", email: "mei.lin@email.com", functions: "Computer Vision, Generative AI", location: "Remote — US", notes: "Generative image pipelines for e-commerce. Specializes in ControlNet and LoRA fine-tuning." },
+      { name: "Devon Harris", linkedin: "linkedin.com/in/devonharris", email: "devon.harris@email.com", functions: "Reinforcement Learning, Deep Learning", location: "Los Angeles, CA", notes: "Game AI and simulation environments. Contributed to several open-source RL libraries." },
+      { name: "Isabel Costa", linkedin: "linkedin.com/in/isabelcosta-ml", email: "isabel.costa@email.com", functions: "Applied Scientist, NLP", location: "Lisbon, Portugal", notes: "Conversational AI and dialogue systems. MSc from IST Lisbon." },
+      { name: "Tariq Mahmoud", linkedin: "linkedin.com/in/tariqmahmoud", email: "tariq.m@email.com", functions: "Data Engineering, Data Science", location: "Remote — US", notes: "Data pipeline architect. Passionate about real-time streaming ML with Kafka and Flink." },
+      { name: "Nina Okafor", linkedin: "linkedin.com/in/ninaokafor", email: "nina.okafor@email.com", functions: "Machine Learning, Recommendation Systems", location: "London, UK", notes: "Content recommendation at scale. Previously built ranking systems serving 10M+ daily users." },
+      { name: "Sam Bergstrom", linkedin: "linkedin.com/in/sambergstrom", email: "sam.b@email.com", functions: "MLOps, Platform Infrastructure", location: "Remote — International", notes: "ML model monitoring and drift detection. Contributor to open-source observability tools." }
+    ];
+
+    let allEntries = FAKE_DATA;
+    let selectedFunctions = new Set();
+    let selectedLocations = new Set();
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function splitMulti(val) { return val.split(',').map(s => s.trim()).filter(Boolean); }
+    function collectUnique(entries, field) {
+      const counts = {};
+      entries.forEach(e => splitMulti(e[field]).forEach(v => { counts[v] = (counts[v] || 0) + 1; }));
+      return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+      document.querySelectorAll('.multi-select-btn').forEach(b => b.classList.remove('active'));
+    }
+    document.addEventListener('click', closeAllDropdowns);
+
+    function buildMultiSelect(btnId, dropdownId, options, selectedSet, label, onChange) {
+      const btn = document.getElementById(btnId);
+      const dropdown = document.getElementById(dropdownId);
+      let html = '';
+      options.forEach(([val, count]) => {
+        html += '<label class="ms-option"><input type="checkbox" value="' + esc(val) + '"><span>' + esc(val) + '</span><span class="opt-count">' + count + '</span></label>';
+      });
+      html += '<div class="ms-clear">Clear all</div>';
+      dropdown.innerHTML = html;
+      dropdown.addEventListener('click', e => e.stopPropagation());
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.contains('open');
+        closeAllDropdowns();
+        if (!isOpen) { dropdown.classList.add('open'); btn.classList.add('active'); }
+      });
+      dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedSet.add(cb.value); else selectedSet.delete(cb.value);
+          updateBtnLabel(btn, selectedSet, label);
+          onChange();
+        });
+      });
+      dropdown.querySelector('.ms-clear').addEventListener('click', () => {
+        selectedSet.clear();
+        dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        updateBtnLabel(btn, selectedSet, label);
+        onChange();
+      });
+    }
+
+    function updateBtnLabel(btn, selectedSet, label) {
+      const labelEl = btn.querySelector('.label');
+      const existing = btn.querySelector('.count-badge');
+      if (existing) existing.remove();
+      if (selectedSet.size === 0) {
+        labelEl.textContent = 'All ' + label;
+      } else {
+        const vals = [...selectedSet];
+        labelEl.textContent = vals.length === 1 ? vals[0] : vals.length + ' ' + label.toLowerCase();
+        const badge = document.createElement('span');
+        badge.className = 'count-badge';
+        badge.textContent = selectedSet.size;
+        btn.insertBefore(badge, btn.querySelector('svg'));
+      }
+    }
+
+    function renderTable(entries) {
+      const container = document.getElementById('tableContainer');
+      if (!entries.length) {
+        container.innerHTML = '<div class="state-msg"><h3>No results found</h3><p>Try adjusting your search or filters.</p></div>';
+        return;
+      }
+      let html = '<table><thead><tr><th>Name</th><th>LinkedIn</th><th>Email</th><th>Specialization(s)</th><th>Location</th><th>About</th></tr></thead><tbody>';
+      for (const e of entries) {
+        const linkedinDisplay = e.linkedin ? (() => {
+          let url = e.linkedin;
+          if (!url.startsWith('http')) url = 'https://' + url;
+          let display = url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+          if (display.length > 30) display = display.slice(0, 30) + '...';
+          return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(display) + '</a>';
+        })() : '';
+        const emailHtml = e.email ? '<a href="mailto:' + esc(e.email) + '">' + esc(e.email) + '</a>' : '';
+        const fnTags = splitMulti(e.functions).map(f => '<span class="func-tag">' + esc(f) + '</span>').join(' ');
+        const locTags = splitMulti(e.location).map(l => '<span class="loc-tag">' + esc(l) + '</span>').join(' ');
+        html += '<tr><td class="col-name">' + esc(e.name) + '</td><td class="col-linkedin">' + linkedinDisplay + '</td><td class="col-email">' + emailHtml + '</td><td class="col-functions">' + fnTags + '</td><td class="col-location">' + locTags + '</td><td class="col-notes">' + (e.notes ? '<div class="notes-text">' + esc(e.notes) + '</div>' : '') + '</td></tr>';
+      }
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = allEntries.filter(e => {
+        const ms = !search || Object.values(e).some(v => v.toLowerCase().includes(search));
+        const mf = selectedFunctions.size === 0 || splitMulti(e.functions).some(f => selectedFunctions.has(f));
+        const ml = selectedLocations.size === 0 || splitMulti(e.location).some(l => selectedLocations.has(l));
+        return ms && mf && ml;
+      });
+      document.getElementById('resultsCount').textContent = filtered.length + ' of ' + allEntries.length;
+      renderTable(filtered);
+    }
+
+    document.getElementById('totalCount').textContent = allEntries.length;
+    buildMultiSelect('fnBtn', 'fnDropdown', collectUnique(allEntries, 'functions'), selectedFunctions, 'Specializations', applyFilters);
+    buildMultiSelect('locBtn', 'locDropdown', collectUnique(allEntries, 'location'), selectedLocations, 'Locations', applyFilters);
+    applyFilters();
+    document.getElementById('refreshTime').textContent = new Date().toLocaleString();
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+  </script>
+</body>
+</html>
